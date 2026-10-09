@@ -1710,6 +1710,32 @@ requirements:
     depends_on: [AUTH-001, AUTH-023, AUTH-025]
     evidence: []
 
+  - id: AUTH-030
+    kind: behavior
+    behavior: Every artifact records its owner, the principal that committed its first version; artifacts that existed before the owner was recorded take the publisher of their version 1.
+    owner: authorization
+    source: {file: decisions/0030-artifact-owner-and-restricted-access.md, anchor: decision}
+    acceptance:
+      behavior: {id: AUTH-030-B, description: "Publish through the browser session, MCP OAuth, and a member-bound API key and observe each creator recorded as owner; upgrade a database without owners and observe every artifact backfilled from its version 1 publisher on every backend."}
+      failure: {id: AUTH-030-F, description: "Republishing, restoring, changing tags or access, and publishing through another member never change the recorded owner, and a backfill never invents an owner for an artifact without a version 1."}
+    deployments: *all
+    status: specified
+    depends_on: [AUTH-001, AUTH-008]
+    evidence: []
+
+  - id: AUTH-031
+    kind: security
+    behavior: An opt-in restricted access setting limits one artifact to its owner and installation administrators on every surface, while account_required stays the default and account_required and public_link keep their behavior.
+    owner: authorization
+    source: {file: decisions/0030-artifact-owner-and-restricted-access.md, anchor: decision}
+    acceptance:
+      behavior: {id: AUTH-031-B, description: "The owner and an administrator list, search, read, open content, publish, restore, comment, dispatch, and change access of a restricted artifact through HTTP, MCP, and the web interface, and switching back to account_required restores member access."}
+      failure: {id: AUTH-031-F, description: "Other members and service principals, including keys with artifact:read or artifact:manage:any, cannot list, count, search, read, open, publish, restore, comment on, dispatch, obtain git-history credentials for, or change a restricted artifact; direct requests answer not found; content sessions minted before the switch stop serving; and only the owner or an administrator can switch to or from restricted."}
+    deployments: *all
+    status: specified
+    depends_on: [AUTH-002, AUTH-030, AUTH-008, SCP-008]
+    evidence: []
+
   - id: SEC-001
     kind: security
     behavior: Published websites are treated as untrusted arbitrary browser JavaScript.
@@ -4267,7 +4293,7 @@ requirements:
     source: {file: artifact-server-product-spec.html, anchor: scope}
     acceptance:
       behavior: {id: SCP-008-B, description: "Confirm that admitted human members can read and manage artifacts in every project while service mutations require explicit capabilities."}
-      failure: {id: SCP-008-F, description: "A project or artifact cannot create an undocumented reader ACL or inherit Plannotator workspace membership."}
+      failure: {id: SCP-008-F, description: "A project or artifact cannot create an undocumented reader ACL or inherit Plannotator workspace membership; the only documented artifact reader rule is the opt-in restricted setting of AUTH-031 (owner and administrators)."}
     deployments: *all
     status: specified
     depends_on: [PRJ-003, AUTH-001, AUTH-006, PLN-004]
