@@ -67,8 +67,10 @@ setting is chosen.
 A service key with `artifact:read` or `artifact:manage:any` acts for an
 automation, not for a person. It does not see restricted artifacts, so an
 installation-wide key cannot be used to read pages their owners kept to
-themselves. The local CLI token in local-owner mode is the single user's own
-channel; that mode has one person, so it does not offer the setting at all.
+themselves. For the same reason only a person can publish a new artifact as
+restricted: a service principal would own something it could never see. In
+local-owner mode there is one person, so MCP does not advertise the setting
+there.
 
 ### Hidden, not forbidden
 
@@ -80,10 +82,12 @@ it exists.
 
 ### Switching to restricted takes effect at once for content
 
-Content sessions and preview leases outlive the switch by up to fifteen
-minutes today. Content serving therefore re-checks a restricted artifact's
-owner against the session's principal, so an open tab of another member stops
-loading new files immediately.
+Content sessions and preview leases outlive an access change by up to fifteen
+minutes today. Switching to restricted therefore deletes, in the same
+transaction, every content session and unconsumed bootstrap of that artifact
+that does not belong to its owner, so an open tab of another member stops
+loading new files immediately. Administrators simply open the artifact again.
+New sessions are minted only after the visibility check.
 
 Git history clone credentials are issued by the provider and cannot be
 revoked early. New credentials for a restricted artifact are issued only to
@@ -93,9 +97,12 @@ default. The deployment guide records this limit.
 
 ### Comments and dispatch follow the artifact
 
-Reading and writing comments requires seeing the artifact. Project-wide
-dispatch listings omit threads of restricted artifacts the viewer cannot see,
-and only the owner or an administrator can dispatch such threads to an agent.
+Reading and writing comments requires seeing the artifact. Creating a dispatch
+treats a thread of a restricted artifact the sender cannot see exactly like an
+unknown thread, so only the owner or an administrator can send such threads to
+an agent. An agent then reads them through the ordinary comment operations,
+which apply the same visibility, so a service-principal agent cannot read them
+at all. Dispatch records list thread identifiers only, never thread bodies.
 
 ### Storage: two additive columns
 
@@ -119,8 +126,10 @@ action in the public-link inventory keeps setting `account_required`.
   versions, content sessions and preview leases, comments, dispatch, git
   history credentials, HTTP, MCP, and the web interface.
 
-Both start `specified` and are proved with normal and hostile tests on the
-SQLite, Postgres, and D1 backends.
+Both are proved with normal and hostile tests: the AUTH-030 and AUTH-031
+conformance tests drive the local server, and the Postgres and D1 runtime tests
+cover owners, the listing filter, replay, and the upgrade backfill on those
+backends.
 
 ## What it would amend
 
