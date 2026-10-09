@@ -1404,10 +1404,20 @@ export function createD1ArtifactRepository(
   ): Promise<void> => {
     if (command.threadIds.length === 0) return;
     const placeholders = command.threadIds.map(() => "?").join(", ");
+    // A thread of a restricted artifact the sender cannot see counts as missing.
     const result = await database.prepare(`
-      SELECT id, state, dispatch_id AS dispatchId FROM comment_threads
-      WHERE installation_id = ? AND project_id = ? AND id IN (${placeholders})
-    `).bind(command.installationId, command.projectId, ...command.threadIds)
+      SELECT thread.id, thread.state, thread.dispatch_id AS dispatchId
+      FROM comment_threads thread
+      JOIN artifacts artifact ON artifact.id = thread.artifact_id
+      WHERE thread.installation_id = ? AND thread.project_id = ?
+        AND thread.id IN (${placeholders})
+        AND (artifact.restricted = 0 OR ? = 1 OR artifact.owner_principal_id = ?)
+    `).bind(
+      command.installationId,
+      command.projectId,
+      ...command.threadIds,
+      ...restrictedScopeParameters(command.restrictedScope),
+    )
       .all<z.input<typeof dispatchThreadCheckRowSchema>>();
     const found = new Map<string, z.infer<typeof dispatchThreadCheckRowSchema>>();
     for (const row of result.results) {

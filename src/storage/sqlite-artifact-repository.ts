@@ -3898,17 +3898,22 @@ export class SqliteArtifactRepository implements
         // the same transaction that stamps the markers, so two concurrent
         // sends can never double-book a thread and a rejected bundle leaves
         // no partial markers behind.
+        // A thread of a restricted artifact the sender cannot see counts as missing.
         const checkThread = this.#database.prepare(
-          `SELECT id AS id, state AS state, dispatch_id AS dispatchId
-           FROM comment_threads
-           WHERE id = ? AND installation_id = ? AND project_id = ?`,
+          `SELECT thread.id AS id, thread.state AS state, thread.dispatch_id AS dispatchId
+           FROM comment_threads thread
+           JOIN artifacts artifact ON artifact.id = thread.artifact_id
+           WHERE thread.id = ? AND thread.installation_id = ? AND thread.project_id = ?
+             AND (artifact.restricted = 0 OR ? = 1 OR artifact.owner_principal_id = ?)`,
         );
+        const restrictedScope = restrictedScopeParameters(command.restrictedScope);
         for (const threadId of command.threadIds) {
           const row = dispatchThreadCheckRowSchema.nullable().parse(
             checkThread.get(
               threadId,
               command.installationId,
               command.projectId,
+              ...restrictedScope,
             ) ?? null,
           );
           if (row === null) {

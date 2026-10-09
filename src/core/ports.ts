@@ -462,6 +462,8 @@ export interface CreateAgentDispatch {
   readonly installationId: string;
   readonly note: string | null;
   readonly projectId: string;
+  /** Threads of restricted artifacts outside this scope count as missing. */
+  readonly restrictedScope: RestrictedArtifactScope;
   readonly sender: CommentAuthor;
   readonly threadIds: readonly string[];
 }

@@ -2123,6 +2123,7 @@ describe.sequential("external-storage Postgres and S3 runtime", () => {
         installationId: dispatchIdentity.installationId,
         note: "Fix both before the review.",
         projectId: defaultProjectId,
+        restrictedScope: {kind: "all"},
         sender,
         threadIds: [firstThreadId, secondThreadId],
       });
@@ -2141,6 +2142,7 @@ describe.sequential("external-storage Postgres and S3 runtime", () => {
         installationId: dispatchIdentity.installationId,
         note: "Fix both before the review.",
         projectId: defaultProjectId,
+        restrictedScope: {kind: "all"},
         sender,
         threadIds: [firstThreadId, secondThreadId],
       });
@@ -2176,6 +2178,7 @@ describe.sequential("external-storage Postgres and S3 runtime", () => {
         installationId: dispatchIdentity.installationId,
         note: null,
         projectId: defaultProjectId,
+        restrictedScope: {kind: "all"},
         sender,
         threadIds: [secondThreadId, thirdThreadId],
       })).rejects.toMatchObject({_tag: "InvalidDispatch"});
@@ -2239,6 +2242,7 @@ describe.sequential("external-storage Postgres and S3 runtime", () => {
         installationId: dispatchIdentity.installationId,
         note: null,
         projectId: defaultProjectId,
+        restrictedScope: {kind: "all"},
         sender,
         threadIds: [thirdThreadId],
       });
@@ -2399,6 +2403,7 @@ describe.sequential("external-storage Postgres and S3 runtime", () => {
         installationId: identity.installationId,
         note: null,
         projectId: defaultProjectId,
+        restrictedScope: {kind: "all"},
         sender,
         threadIds: [threadId],
       });

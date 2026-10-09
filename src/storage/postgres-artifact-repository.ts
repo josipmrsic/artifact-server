@@ -3035,15 +3035,23 @@ export class PostgresArtifactRepository implements
         // sends can never double-book a thread and a rejected bundle leaves
         // no partial markers behind.
         for (const threadId of command.threadIds) {
+          // A thread of a restricted artifact the sender cannot see counts as missing.
+          const [restrictedAll, restrictedOwner] =
+            restrictedScopeParameters(command.restrictedScope);
           const checked = yield* sql`SELECT
               thread.id AS "id",
               thread.state AS "state",
               thread.dispatch_id AS "dispatchId"
             FROM comment_threads thread
+            JOIN artifacts artifact
+              ON artifact.installation_id = thread.installation_id
+              AND artifact.id = thread.artifact_id
             WHERE thread.installation_id = ${installationId}
               AND thread.project_id = ${command.projectId}
               AND thread.id = ${threadId}
-            FOR UPDATE`;
+              AND (NOT artifact.restricted OR ${restrictedAll}::int = 1
+                OR artifact.owner_principal_id = ${restrictedOwner}::text)
+            FOR UPDATE OF thread`;
           const row = dispatchThreadCheckRowSchema.nullable().parse(
             checked[0] ?? null,
           );
