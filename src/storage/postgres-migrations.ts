@@ -663,6 +663,11 @@ const addArtifactOwner = Effect.gen(function*() {
       ADD COLUMN restricted BOOLEAN NOT NULL DEFAULT false`,
     `ALTER TABLE idempotency_records
       ADD COLUMN restricted BOOLEAN NOT NULL DEFAULT false`,
+    // The index comes first: the backfill queues events for the deferred
+    // current-version foreign key, and Postgres refuses CREATE INDEX on a
+    // table with pending trigger events in the same transaction.
+    `CREATE INDEX artifacts_project_owner_active_created
+      ON artifacts (installation_id, project_id, owner_principal_id, deleted_at, created_at, id)`,
     // Version 1 is never deleted, so its publisher is the artifact's creator.
     `UPDATE artifacts SET owner_principal_id = versions.publisher_principal_id
       FROM versions
@@ -670,8 +675,6 @@ const addArtifactOwner = Effect.gen(function*() {
         AND versions.project_id = artifacts.project_id
         AND versions.artifact_id = artifacts.id
         AND versions.number = 1`,
-    `CREATE INDEX artifacts_project_owner_active_created
-      ON artifacts (installation_id, project_id, owner_principal_id, deleted_at, created_at, id)`,
   ] as const;
   for (const statement of statements) yield* sql.unsafe(statement);
 });
